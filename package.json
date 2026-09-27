@@ -1,0 +1,168 @@
+{
+  "name": "autumn-context-bridge",
+  "displayName": "Autumn Context Bridge",
+  "description": "Add files and selections to Claude Code and Codex CLI terminals via right-click menus and keyboard shortcuts",
+  "version": "0.1.0",
+  "publisher": "LMKKK",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LMKKK/vs-context-bridge.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "ai",
+    "context",
+    "codex",
+    "openai"
+  ],
+  "icon": "resources/icon.png",
+  "galleryBanner": {
+    "color": "#D97706",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "autumnContextBridge.addFileToContext",
+        "title": "Add to Claude Code",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.sendSelectionToContext",
+        "title": "Send Selection to Claude Code",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.setAsClaudeTerminal",
+        "title": "Set as Claude Code Terminal",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.selectTerminal",
+        "title": "Select Claude Code Terminal",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.addFileToCodex",
+        "title": "Add to Codex",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.sendSelectionToCodex",
+        "title": "Send Selection to Codex",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.setAsCodexTerminal",
+        "title": "Set as Codex Terminal",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.selectCodexTerminal",
+        "title": "Select Codex Terminal",
+        "category": "Autumn Context Bridge"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "autumnContextBridge.addFileToContext",
+          "group": "navigation"
+        },
+        {
+          "command": "autumnContextBridge.addFileToCodex",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "autumnContextBridge.sendSelectionToContext",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        },
+        {
+          "command": "autumnContextBridge.sendSelectionToCodex",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "autumnContextBridge.addFileToContext",
+          "group": "navigation"
+        },
+        {
+          "command": "autumnContextBridge.addFileToCodex",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "autumnContextBridge.addFileToContext",
+        "key": "ctrl+shift+.",
+        "mac": "cmd+shift+.",
+        "when": "editorFocus"
+      },
+      {
+        "command": "autumnContextBridge.sendSelectionToContext",
+        "key": "ctrl+shift+,",
+        "mac": "cmd+shift+,",
+        "when": "editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "Autumn Context Bridge",
+      "properties": {
+        "autumnContextBridge.terminalNamePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional terminal name patterns to match as Claude Code terminals (regex supported)"
+        },
+        "autumnContextBridge.codexTerminalNamePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional terminal name patterns to match as Codex CLI terminals (regex supported)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap",
+    "build:prod": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify",
+    "launch": "npm run build && node scripts/launch.cjs",
+    "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package": "npm run build:prod && npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "cross-spawn": "^7.0.6",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
+  }
+}
