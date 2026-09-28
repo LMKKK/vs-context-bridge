@@ -1,7 +1,7 @@
 {
   "name": "autumn-context-bridge",
   "displayName": "Autumn Context Bridge",
-  "description": "Add files and selections to Claude Code and Codex CLI terminals via right-click menus and keyboard shortcuts",
+  "description": "Add file and selection references to Claude Code, Codex, OMP, and configurable terminal agents",
   "version": "0.1.0",
   "publisher": "LMKKK",
   "repository": {
@@ -23,7 +23,8 @@
     "ai",
     "context",
     "codex",
-    "openai"
+    "openai",
+    "omp"
   ],
   "icon": "resources/icon.png",
   "galleryBanner": {
@@ -75,6 +76,26 @@
         "command": "autumnContextBridge.selectCodexTerminal",
         "title": "Select Codex Terminal",
         "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.addFilesToAgent",
+        "title": "Add to Agent",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.sendSelectionToAgent",
+        "title": "Send Selection to Agent",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.setAsAgentTerminal",
+        "title": "Set as Agent Terminal",
+        "category": "Autumn Context Bridge"
+      },
+      {
+        "command": "autumnContextBridge.selectAgentTerminal",
+        "title": "Select Agent Terminal",
+        "category": "Autumn Context Bridge"
       }
     ],
     "menus": {
@@ -85,6 +106,10 @@
         },
         {
           "command": "autumnContextBridge.addFileToCodex",
+          "group": "navigation"
+        },
+        {
+          "command": "autumnContextBridge.addFilesToAgent",
           "group": "navigation"
         }
       ],
@@ -98,6 +123,11 @@
           "command": "autumnContextBridge.sendSelectionToCodex",
           "when": "editorHasSelection",
           "group": "navigation"
+        },
+        {
+          "command": "autumnContextBridge.sendSelectionToAgent",
+          "when": "editorHasSelection",
+          "group": "navigation"
         }
       ],
       "editor/title/context": [
@@ -107,6 +137,10 @@
         },
         {
           "command": "autumnContextBridge.addFileToCodex",
+          "group": "navigation"
+        },
+        {
+          "command": "autumnContextBridge.addFilesToAgent",
           "group": "navigation"
         }
       ]
@@ -143,6 +177,22 @@
           },
           "default": [],
           "description": "Additional terminal name patterns to match as Codex CLI terminals (regex supported)"
+        },
+        "autumnContextBridge.agents": {
+          "type": "array",
+          "default": [],
+          "description": "Additional terminal agents shown under Add to Agent and Send Selection to Agent. OMP is built in.",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "terminalNamePatterns", "fileReferenceTemplate", "selectionReferenceTemplate"],
+            "properties": {
+              "id": { "type": "string", "description": "Unique lowercase ID such as opencode" },
+              "name": { "type": "string", "description": "Display name" },
+              "terminalNamePatterns": { "type": "array", "items": { "type": "string" }, "description": "Case-insensitive regex patterns for terminal titles" },
+              "fileReferenceTemplate": { "type": "string", "description": "File reference template using {path}" },
+              "selectionReferenceTemplate": { "type": "string", "description": "Selection template using {path}, {startLine}, {endLine}, or {lineRange}" }
+            }
+          }
         }
       }
     }

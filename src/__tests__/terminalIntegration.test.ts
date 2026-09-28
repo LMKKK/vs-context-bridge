@@ -18,7 +18,7 @@ const mock = vi.hoisted(() => {
   };
   return {
     Emitter, events,
-    patterns: {} as Record<string, string[]>,
+    patterns: {} as Record<string, any>,
     commands: new Map<string, (...args: any[]) => any>(),
     statusItems: [] as any[],
     window: {
@@ -58,6 +58,7 @@ import { activate } from '../extension';
 import { TerminalDetector } from '../terminalDetector';
 import { ContextSender } from '../contextSender';
 import { CLAUDE, CODEX } from '../providers';
+import { AGENT_COMMANDS } from '../agentConfig';
 import manifest from '../../package.json';
 
 let subscriptions: { dispose(): void }[];
@@ -299,5 +300,82 @@ describe('commands and context delivery', () => {
     mock.events.close.fire(codex);
     expect(codexItem.hide).toHaveBeenCalled();
     expect(claudeItem.text).toBe('$(terminal) Claude Code');
+  });
+});
+
+describe('configurable agents', () => {
+  it('sends OMP file and line references through the shared picker', async () => {
+    const omp = terminal('OMP — project');
+    mock.window.terminals = [omp];
+    selectEditor();
+    startExtension();
+    mock.window.showQuickPick.mockImplementation(async (items: any[]) => items[0]);
+    await mock.commands.get(AGENT_COMMANDS.addFiles)!({ fsPath: '/project/src/my file.ts' });
+    await mock.commands.get(AGENT_COMMANDS.sendSelection)!();
+    expect(omp.sendText).toHaveBeenNthCalledWith(1, ' @"src/my file.ts" ', false);
+    expect(omp.sendText).toHaveBeenNthCalledWith(2, ' @src/main.ts#L10-20 ', false);
+    expect(mock.statusItems[2].text).toBe('$(terminal) OMP $(selection)');
+  });
+
+  it('lets a custom agent match a title, format refs, and stay first in the picker', async () => {
+    mock.patterns.agents = [{
+      id: 'other', name: 'Other Agent', terminalNamePatterns: ['^helper$'],
+      fileReferenceTemplate: 'file:{path}',
+      selectionReferenceTemplate: 'line:{path}:{lineRange}',
+    }];
+    const other = terminal('Helper');
+    const omp = terminal('OMP');
+    mock.window.terminals = [other, omp];
+    selectEditor();
+    startExtension();
+    mock.window.showQuickPick.mockImplementationOnce(async (items: any[]) => items.find((item) => item.runtime?.provider.id === 'other'));
+    await mock.commands.get(AGENT_COMMANDS.sendSelection)!();
+    expect(other.sendText).toHaveBeenCalledWith(' line:src/main.ts:10-20 ', false);
+    mock.window.showQuickPick.mockImplementationOnce(async (items: any[]) => {
+      expect(items[0].runtime.provider.id).toBe('other');
+      return items[0];
+    });
+    await mock.commands.get(AGENT_COMMANDS.addFiles)!({ fsPath: '/project/a.ts' });
+    expect(other.sendText).toHaveBeenLastCalledWith(' file:a.ts ', false);
+    expect(omp.sendText).not.toHaveBeenCalled();
+  });
+
+  it('can designate an OMP terminal with an unrecognizable title', async () => {
+    const shell = terminal('π');
+    mock.window.terminals = [shell];
+    mock.window.activeTerminal = shell;
+    selectEditor();
+    startExtension();
+    mock.window.showQuickPick.mockImplementation(async (items: any[]) => items[0]);
+    await mock.commands.get(AGENT_COMMANDS.designate)!();
+    mock.events.config.fire({ affectsConfiguration: (key: string) => key === 'autumnContextBridge.agents' });
+    await mock.commands.get(AGENT_COMMANDS.sendSelection)!();
+    expect(shell.sendText).toHaveBeenCalledWith(' @src/main.ts#L10-20 ', false);
+  });
+
+  it('points to the shared designation command when OMP has no target', async () => {
+    selectEditor();
+    startExtension();
+    mock.window.showQuickPick.mockImplementationOnce(async (items: any[]) => items[0]);
+    await mock.commands.get(AGENT_COMMANDS.sendSelection)!();
+    expect(mock.window.showWarningMessage).toHaveBeenCalledWith(expect.stringContaining('Set as Agent Terminal'));
+  });
+
+  it('refreshes configured agents without restarting and rejects invalid settings', async () => {
+    startExtension();
+    mock.patterns.agents = [{
+      id: 'helper', name: 'Helper', terminalNamePatterns: ['['],
+      fileReferenceTemplate: '{path}', selectionReferenceTemplate: '{path}:{lineRange}',
+    }];
+    mock.events.config.fire({ affectsConfiguration: (key: string) => key === 'autumnContextBridge.agents' });
+    expect(mock.window.showWarningMessage).toHaveBeenCalledWith(expect.stringContaining('invalid regex'));
+    mock.patterns.agents[0].terminalNamePatterns = ['^helper$'];
+    const helper = terminal('helper');
+    mock.window.terminals = [helper];
+    selectEditor();
+    mock.events.config.fire({ affectsConfiguration: () => true });
+    mock.window.showQuickPick.mockImplementationOnce(async (items: any[]) => items.find((item) => item.runtime?.provider.id === 'helper'));
+    await mock.commands.get(AGENT_COMMANDS.sendSelection)!();
+    expect(helper.sendText).toHaveBeenCalledWith(' src/main.ts:10-20 ', false);
   });
 });

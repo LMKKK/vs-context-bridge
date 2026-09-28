@@ -19,7 +19,7 @@ export class TerminalDetector implements vscode.Disposable {
       vscode.window.onDidCloseTerminal((t) => this.onTerminalClosed(t)),
       vscode.window.onDidChangeActiveTerminal(() => this.refresh()),
       vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration(`autumnContextBridge.${this.provider.patternsSetting}`)) {
+        if (this.provider.patternsSetting && event.affectsConfiguration(`autumnContextBridge.${this.provider.patternsSetting}`)) {
           this.refresh();
         }
       }),
@@ -59,7 +59,9 @@ export class TerminalDetector implements vscode.Disposable {
 
   private isMatchingTerminal(terminal: vscode.Terminal): boolean {
     const config = vscode.workspace.getConfiguration('autumnContextBridge');
-    const customPatterns: string[] = config.get(this.provider.patternsSetting, []);
+    const customPatterns: string[] = this.provider.patternsSetting
+      ? config.get(this.provider.patternsSetting, [])
+      : [];
     return this.provider.matchesTerminalName(terminal.name, customPatterns);
   }
 
@@ -82,7 +84,7 @@ export class TerminalDetector implements vscode.Disposable {
     }
   }
 
-  private refresh(): void {
+  refresh(): void {
     this.scanForTarget();
     this._onDidChange.fire();
   }

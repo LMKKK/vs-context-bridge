@@ -7,9 +7,11 @@ import {
 } from './matching';
 
 export interface Provider {
+  readonly id: string;
   readonly name: string;
-  readonly patternsSetting: string;
+  readonly patternsSetting?: string;
   readonly statusBarPriority: number;
+  readonly designateTitle?: string;
   readonly commands: {
     readonly addFiles: string;
     readonly sendSelection: string;
@@ -22,6 +24,7 @@ export interface Provider {
 }
 
 export const CLAUDE: Provider = {
+  id: 'claude',
   name: 'Claude Code',
   patternsSetting: 'terminalNamePatterns',
   statusBarPriority: 50,
@@ -37,6 +40,7 @@ export const CLAUDE: Provider = {
 };
 
 export const CODEX: Provider = {
+  id: 'codex',
   name: 'Codex',
   patternsSetting: 'codexTerminalNamePatterns',
   statusBarPriority: 49,

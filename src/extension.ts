@@ -3,11 +3,13 @@ import { TerminalDetector } from './terminalDetector';
 import { ContextSender } from './contextSender';
 import { StatusBar } from './statusBar';
 import { CLAUDE, CODEX, Provider } from './providers';
+import { AgentManager } from './agentManager';
 
 export function activate(context: vscode.ExtensionContext) {
   for (const provider of [CLAUDE, CODEX]) {
     registerProvider(context, provider);
   }
+  context.subscriptions.push(new AgentManager());
 }
 
 function registerProvider(context: vscode.ExtensionContext, provider: Provider): void {

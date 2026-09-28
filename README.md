@@ -1,6 +1,6 @@
 # Autumn Context Bridge
 
-A VS Code extension that bridges your editor and the Claude Code and Codex CLIs. Right-click files or selections to insert references directly into the corresponding VS Code integrated terminal, without pressing Enter.
+A VS Code extension that bridges your editor and terminal coding agents. It has dedicated Claude Code and Codex actions, plus a shared Agent action for OMP and agents you configure. Right-click files or selections to insert references into the corresponding VS Code integrated terminal, without pressing Enter.
 
 Born out of switching from Cursor to Claude Code — this extension brings back some most-missed editor integrations: right-click to send files and selections as prompt context.
 
@@ -73,6 +73,32 @@ The command palette also provides:
 
 Each CLI has its own status bar item. It appears when a target exists, shows a selection icon when text is selected, and sends the selection on click. Hover over it to see the target terminal's name.
 
+### OMP and additional agents
+
+The existing Claude Code and Codex menu entries remain available. **Add to Agent** and **Send Selection to Agent** open a picker for OMP and any agents in `autumnContextBridge.agents`. The most recently chosen agent appears first. OMP is built in: files use `@src/main.ts`, and selections use `@src/main.ts#L10-20` (or `#L10` for one line). Only references are inserted; selected code is not copied.
+
+OMP paths containing spaces are quoted as `@"src/my file.ts"`; selection ranges follow the closing quote.
+
+OMP terminal titles containing `omp` or `Oh My Pi` are detected automatically. If OMP uses a session title such as `π`, run **Set as Agent Terminal**, choose OMP, then choose the terminal. **Select Agent Terminal** pins one of several detected or designated terminals. Each agent has its own target. The shared status bar item shows the last chosen agent when its target is available; clicking it opens the selection picker.
+
+To add another terminal agent, put an entry in VS Code settings (user or workspace):
+
+```json
+{
+  "autumnContextBridge.agents": [
+    {
+      "id": "my-agent",
+      "name": "My Agent",
+      "terminalNamePatterns": ["^My Agent( |$)"],
+      "fileReferenceTemplate": "@{path}",
+      "selectionReferenceTemplate": "@{path}:{lineRange}"
+    }
+  ]
+}
+```
+
+Terminal patterns are case-insensitive regular expressions. File templates use `{path}`; selection templates can also use `{startLine}`, `{endLine}`, and `{lineRange}`. The latter produces `10` for one line or `10-20` for a range. Agent IDs must be unique lowercase letters, numbers, or hyphens, start with a letter, and cannot be `claude`, `codex`, or `omp`. Invalid entries are reported and skipped. Setting changes take effect without restarting VS Code. If a terminal title does not identify the agent, use **Set as Agent Terminal**.
+
 ### Terminal detection and selection
 
 Codex detection matches terminal titles containing `codex`, ignoring case, plus any configured custom patterns. It does not inspect running processes. If the title remains `zsh` or `bash`, manually designate the terminal. Claude's existing title and version-number matching rules are unchanged; Codex does not match bare version numbers.
@@ -96,12 +122,13 @@ All command IDs and settings use the `autumnContextBridge` prefix. Previous comm
 |---|---|---|---|
 | `autumnContextBridge.terminalNamePatterns` | `string[]` | `[]` | Additional regex patterns to match terminal names as Claude Code terminals |
 | `autumnContextBridge.codexTerminalNamePatterns` | `string[]` | `[]` | Additional regex patterns to match terminal names as Codex CLI terminals |
+| `autumnContextBridge.agents` | `object[]` | `[]` | Additional agents with names, terminal patterns, and reference templates |
 
 Patterns are case-insensitive. Invalid regex patterns are ignored. Changes take effect without restarting VS Code.
 
 ## How It Works
 
-The extension inserts references into the chosen terminal input without pressing Enter, so you stay in control. Claude receives `@relative/path` or `@relative/path:startLine-endLine`; Codex receives `relative/path` or `relative/path:startLine-endLine`.
+The extension inserts references into the chosen terminal input without pressing Enter, so you stay in control. Claude receives `@relative/path` or `@relative/path:startLine-endLine`; Codex receives `relative/path` or `relative/path:startLine-endLine`; OMP receives `@relative/path` or `@relative/path#Lstart-end`.
 
 Paths are resolved relative to the target terminal's working directory: shell integration's directory when available, then the terminal's creation directory, then the first workspace folder. Files outside that directory use absolute paths. If you start a CLI with a different working root (such as `codex -C`), that root may not be visible to VS Code's shell integration.
 

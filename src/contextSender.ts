@@ -66,7 +66,7 @@ export class ContextSender {
     const terminal = this.detector.target;
     if (!terminal) {
       vscode.window.showWarningMessage(
-        `No ${this.detector.provider.name} terminal found. Open one first or use "Set as ${this.detector.provider.name} Terminal".`,
+        `No ${this.detector.provider.name} terminal found. Open one first or use "${this.detector.provider.designateTitle ?? `Set as ${this.detector.provider.name} Terminal`}".`,
       );
     }
     return terminal;

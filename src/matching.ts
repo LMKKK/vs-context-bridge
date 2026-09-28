@@ -18,7 +18,7 @@ export function matchesCodexTerminalName(
   return name.toLowerCase().includes('codex') || matchesCustomPatterns(name, customPatterns);
 }
 
-function matchesCustomPatterns(name: string, customPatterns: string[]): boolean {
+export function matchesCustomPatterns(name: string, customPatterns: string[]): boolean {
   for (const pattern of customPatterns) {
     try {
       if (new RegExp(pattern, 'i').test(name)) return true;
