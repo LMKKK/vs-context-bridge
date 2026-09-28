@@ -4,6 +4,21 @@ A VS Code extension that bridges your editor and terminal coding agents. It has 
 
 Born out of switching from Cursor to Claude Code — this extension brings back some most-missed editor integrations: right-click to send files and selections as prompt context.
 
+
+> **Forked from [jeffycyang/claude-vscode-context-plus](https://github.com/jeffycyang/claude-vscode-context-plus).** This repository extends the original Claude Code reference bridge with the capabilities summarized below. See [Changes vs. upstream](#changes-vs-upstream) for details.
+
+
+## Changes vs. upstream
+
+Relative to the original `claude-vscode-context-plus`, this fork adds:
+
+- **Codex CLI support** — dedicated **Add to Codex** and **Send Selection to Codex** commands, explorer/editor-tab/editor-selection menus, command-palette entries, an independent Codex status bar item, and its own target/selection/pin state. Codex references are plain text (`src/main.ts`, `src/main.ts:10`, `src/main.ts:10-20`), with spaces quoted (`"src/my file.ts":10-20`). Detection matches terminal titles containing `codex` (case-insensitive) plus user-configurable regex patterns; running processes are not inspected. See the [Codex CLI](#codex-cli) section for the required `terminal_title` setup.
+- **OMP / Oh My Pi support** — built-in **Add to Agent** and **Send Selection to Agent** commands routed through an agent picker, OMP-specific reference syntax (`@src/main.ts` for files, `@src/main.ts#L10-20` / `@src/main.ts#L10` for selections), auto-detection of terminals titled `omp` or `Oh My Pi`, and a shared agent status bar item that mirrors the most recently chosen agent.
+- **Pluggable agent framework** — register any additional terminal agent via `autumnContextBridge.agents`, providing `terminalNamePatterns` plus `fileReferenceTemplate` / `selectionReferenceTemplate` (`{path}`, `{startLine}`, `{endLine}`, `{lineRange}`). IDs are validated (lowercase letters/digits/hyphens, must not clash with `claude`/`codex`/`omp`); invalid entries are reported and skipped; settings reload without restarting VS Code. Each agent keeps its own designated terminal, status bar item, and pin state.
+- **Independent per-CLI targets and selection flow** — Claude, Codex, and each configured agent maintain their own designated/remembered/selected terminal. Sending to Codex never falls back to a Claude terminal just because it has focus. A pinned target stays fixed when focus changes; closing it restores automatic selection. Explicit **Set as ... Terminal** / **Select ... Terminal** commands exist per CLI.
+- **Selection icon in the status bar** — Claude/Codex/Agent status bar items display a selection indicator when text is selected in the editor, and a single click sends that selection to the matching target.
+- **Refactored, documented architecture** — code reorganized into focused modules (`terminalDetector.ts`, `contextSender.ts`, `statusBar.ts`, `matching.ts`) with unit tests covering terminal matching, invalid regex, multi-root paths, and line ranges. Command and setting IDs migrated to the `autumnContextBridge.*` namespace; old IDs are unsupported.
+
 ## Features
 
 ### Add files to context
